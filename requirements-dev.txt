@@ -1,0 +1,16 @@
+-r requirements.txt
+
+pre-commit==4.2.*
+
+# linting
+isort==6.0.*
+black==25.1.*
+mypy==1.15.*
+
+pytest==8.3.*
+
+# local black-connect-daemon
+aiohttp==3.11.*
+
+# mypy-stubs
+types-python-dateutil==2.9.*
