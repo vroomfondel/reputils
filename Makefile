@@ -1,4 +1,4 @@
-.PHONY: tests
+.PHONY: tests help install venv lint dstart isort tcheck build build-psql commit-checks prepare pypibuild pypipush
 SHELL := /usr/bin/bash
 .ONESHELL:
 
@@ -11,41 +11,47 @@ help:
 	@printf "\ntests\n\tLaunch tests\n"
 	@printf "\nprepare\n\tLaunch tests and commit-checks\n"
 	@printf "\ncommit-checks\n\trun pre-commit checks on all files\n"
-	# @printf "\nbuild \n\tbuild docker image\n"
+	@printf "\pypibuild \n\tbuild image package for pypi\n"
+	@printf "\pypipush \n\push package to pypi\n"
 
-venv_activated=if [ -z $${VIRTUAL_ENV+x} ]; then printf "activating .venv...\n" ; source .venv/bin/activate ; else printf ".venv already activated\n"; fi
 
-install: .venv
 
-.venv: .venv/touchfile
+# check for "CI" not in os.environ || "GITHUB_RUN_ID" not in os.environ
+venv_activated=if [ -z $${VIRTUAL_ENV+x} ] && [ -z $${GITHUB_RUN_ID+x} ] ; then printf "activating venv...\n" ; source .venv/bin/activate ; else printf "venv already activated or GITHUB_RUN_ID=$${GITHUB_RUN_ID} is set\n"; fi
+
+install: venv
+
+venv: .venv/touchfile
 
 .venv/touchfile: requirements.txt requirements-dev.txt
-	test -d .venv || python3.12 -m venv
-	source venv/bin/activate
-	pip install -r requirements-dev.txt
-	touch .venv/touchfile
+	@if [ -z "$${GITHUB_RUN_ID}" ]; then \
+		test -d .venv || python3.14 -m venv .venv; \
+		source .venv/bin/activate; \
+		pip install -r requirements-dev.txt; \
+		touch .venv/touchfile; \
+	else \
+  		echo "Skipping venv setup because GITHUB_RUN_ID is set"; \
+  	fi
 
 
-tests: .venv
+tests: venv
 	@$(venv_activated)
 	pytest .
 
-lint: .venv
+lint: venv
 	@$(venv_activated)
 	black -l 120 .
 
-isort: .venv
+isort: venv
 	@$(venv_activated)
 	isort .
 
-tcheck: .venv
+tcheck: venv
 	@$(venv_activated)
-	mypy *.py **/*.py
+	mypy *.py reputils
 
-docker-build:
-	docker build -t reputils:latest .
 
-.git/hooks/pre-commit: .venv
+.git/hooks/pre-commit: venv
 	@$(venv_activated)
 	pre-commit install
 
@@ -55,16 +61,33 @@ commit-checks: .git/hooks/pre-commit
 
 prepare: tests commit-checks
 
+# REPUTILS_SOURCES := $(shell find reputils -type f -name '*.py' 2>/dev/null)
+REPUTILS_SOURCES := reputils/*.py
+VENV_DEPS := requirements.txt requirements-dev.txt requirements-build.txt
 
-pypibuild: .venv
+VERSION := $(shell egrep -m 1 ^version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | tr -d " " | cut -d'=' -f2)
+
+dist/reputils-$(VERSION).tar.gz \
+dist/reputils-$(VERSION)-py3-none-any.whl \
+dist/.touchfile: $(REPUTILS_SOURCES) $(VENV_DEPS) pyproject.toml
 	@$(venv_activated)
+	rm -vf dist/reputils-*
 	pip install -r requirements-build.txt
 	pip install --upgrade twine build
 	python3 -m build
+	@touch dist/.touchfile
 
 
-#	python3 -m twine upload --repository pypi dist/*
+pypibuild: venv dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
 
+# REPUTILS_DIST_PACKAGES := dist/reputils-*
+
+dist/.touchfile_push: dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
+	@$(venv_activated)
+	python3 -m twine upload --repository pypi dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
+	@touch dist/.touchfile_push
+
+pypipush: venv dist/.touchfile_push
 
 
 # UPLOAD:
