@@ -67,14 +67,14 @@ VENV_DEPS := requirements.txt requirements-dev.txt requirements-build.txt
 
 VERSION := $(shell egrep -m 1 ^version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | tr -d " " | cut -d'=' -f2)
 
-dist/reputils-$(VERSION).tar.gz \
-dist/reputils-$(VERSION)-py3-none-any.whl \
-dist/.touchfile: $(REPUTILS_SOURCES) $(VENV_DEPS) pyproject.toml
+dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl dist/.touchfile: $(REPUTILS_SOURCES) $(VENV_DEPS) pyproject.toml
 	@$(venv_activated)
 	rm -vf dist/reputils-*
 	pip install -r requirements-build.txt
-	pip install --upgrade twine build
-	python3 -m build
+	# pip install --upgrade twine build
+	# python3 -m build
+	# hatch version fix  # would bump version
+	hatch build --clean
 	@touch dist/.touchfile
 
 
@@ -84,14 +84,31 @@ pypibuild: venv dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-non
 
 dist/.touchfile_push: dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
 	@$(venv_activated)
-	python3 -m twine upload --repository pypi dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
+	# python3 -m twine upload --repository pypi dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
+	hatch publish -r main
 	@touch dist/.touchfile_push
 
 pypipush: venv dist/.touchfile_push
 
+# From https://hatch.pypa.io/latest/publish/#authentication
+# HATCH_INDEX_USER and HATCH_INDEX_AUTH
 
-# UPLOAD:
+# UPLOAD (old twine):
 # python3 -m twine upload --repository testpypi dist/*
-#python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package-YOUR-USERNAME-HERE
-#python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ reputils-vroomfondel==0.0.2
+
+# UPLOAD to pypitest with hatch:
+# hatch publish -r test
+
+# UPLOAD to pypi(main) with hatch:
+# hatch publish -r main
+
+# INSTALL from test
+# python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package-YOUR-USERNAME-HERE
+
+# INSTALL from test (if not found on pypitest -> install from normal pypi
+# python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ reputils==0.0.13
+
+# INSTALL from pypi(main)
+# python3 -m pip install reputils==0.0.13
+
 
