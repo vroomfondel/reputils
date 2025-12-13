@@ -1,15 +1,12 @@
-from __future__ import annotations
-
 import datetime
 import os
 
-# Import the email modules we'll need
 import smtplib
 import ssl
 import sys
 from dataclasses import dataclass, field
 from email import charset, encoders, utils
-from email.message import EmailMessage, MIMEPart
+from email.message import EmailMessage
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -17,7 +14,7 @@ from email.utils import format_datetime as formatdate_ext
 from email.utils import formataddr as formataddr_ext
 from email.utils import parseaddr
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, Dict, ClassVar, Callable, Any
+from typing import List, Optional, Tuple, Dict, ClassVar, Callable, Any
 
 # from dateutil.tz import gettz
 import pytz
@@ -57,6 +54,18 @@ _tzberlin: datetime.tzinfo = pytz.timezone("Europe/Berlin")
 
 
 def _loguru_skiplog_filter(record: dict) -> bool:
+    """Filter function to hide records with ``extra['skiplog']`` set.
+
+    Intended for use with ``loguru``'s ``filter=`` parameter so that callers can
+    temporarily suppress verbose logs for specific operations by binding
+    ``skiplog=True`` on the logger.
+
+    Args:
+        record (dict): Loguru record dictionary.
+
+    Returns:
+        bool: ``True`` to keep the record, ``False`` to skip it.
+    """
     # {
     #     "elapsed": timedelta,      # Zeit seit Programmstart
     #     "exception": tuple,         # Exception-Info (type, value, traceback) oder None
@@ -76,6 +85,17 @@ def _loguru_skiplog_filter(record: dict) -> bool:
 
 
 def configure_loguru_default_with_skiplog_filter(loguru_filter: Callable[[Dict[str, Any]], bool]=_loguru_skiplog_filter) -> None:
+    """Configure a default ``loguru`` sink with a convenient format and filter.
+
+    This sets a colored formatter, applies the given filter (by default
+    :func:`_loguru_skiplog_filter`), and ensures a reasonable default log level
+    via the ``LOGURU_LEVEL`` environment variable.
+
+    Args:
+        loguru_filter: A callable taking a record dict and returning ``True``
+            if the record should be emitted. Defaults to
+            :func:`_loguru_skiplog_filter`.
+    """
     glogger.info("configure_loguru_default_with_skiplog_filter")
 
     os.environ["LOGURU_LEVEL"] = os.getenv("LOGURU_LEVEL", "DEBUG")  # standard is DEBUG
@@ -186,10 +206,21 @@ class SendResult:
 
         return None
 
-    def all_succeeded(self):
+    def all_succeeded(self) -> bool:
+        """Whether delivery succeeded for all recipients.
+
+        Returns:
+            bool: ``True`` if no failures were recorded, else ``False``.
+        """
         return self.num_failed == 0
 
-    def all_failed(self):
+    def all_failed(self) -> bool:
+        """Whether delivery failed for all recipients.
+
+        Returns:
+            bool: ``True`` if ``num_failed`` equals ``num_recipients``, else
+            ``False``.
+        """
         return self.num_failed == self.num_recipients
 
 
