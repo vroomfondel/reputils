@@ -1,7 +1,7 @@
 ![mypy and pytests](https://github.com/vroomfondel/reputils/actions/workflows/mypynpytests.yml/badge.svg)
-![Cumulative Clones](https://img.shields.io/endpoint?logo=github&url=https://gist.githubusercontent.com/vroomfondel/22c802be25a8241e81e98a28d00c6036/raw/reputils_clone_count.json)
+![Cumulative Clones](https://img.shields.io/endpoint?logo=github&url=https://gist.githubusercontent.com/vroomfondel/98e7e1bf08bf1bdefdcc68e96985710d/raw/reputils_clone_count.json)
 
-![Gemini_Generated_Image_reputils_695z2w695z2w695z_250x250.png](Gemini_Generated_Image_reputils_695z2w695z2w695z_250x250.png)
+[![https://github.com/vroomfondel/reputils/raw/main/Gemini_Generated_Image_reputils_695z2w695z2w695z_250x250.png](https://github.com/vroomfondel/reputils/raw/main/Gemini_Generated_Image_reputils_695z2w695z2w695z_250x250.png)](https://github.com/vroomfondel/reputils)
 
 # reputils
 
@@ -123,7 +123,7 @@ Convenience tasks are provided via `Makefile`:
 - `make isort` – fix import order
 - `make prepare` – run tests and pre‑commit checks
 - `make pypibuild` – build distribution with `hatchling`/`build`
-- `make pypipush` – upload to PyPI via `twine`
+- `make pypipush` – upload to PyPI via `hatch`
 
 Note: The Makefile activates `.venv` automatically for these targets when not running in GitHub Actions.
 
@@ -171,7 +171,7 @@ Build wheels/sdist:
 make pypibuild
 ```
 
-Upload to PyPI (requires credentials configured for `twine`):
+Upload to PyPI (requires credentials configured for `hatch` resp. `${HOME}/.pypirc` properly filled):
 
 ```
 make pypipush
@@ -191,3 +191,7 @@ MIT License. See the `LICENSE` file.
 
 - TODO: Add a CHANGELOG or release notes.
 - TODO: Document additional modules if added in the future.
+
+## ⚠️ Disclaimer
+
+This is a development/experimental project. For production use, review security settings, customize configurations, and test thoroughly in your environment. Provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software. Use at your own risk.
