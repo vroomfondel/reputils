@@ -62,9 +62,12 @@ The `make install` target creates/uses a local `.venv` and installs dev requirem
 
 ## Usage
 
-Example: compose and send an email using `MRSendmail`.
+### Basic send (text and/or HTML)
+
+`MRSendmail.send()` now returns a tuple `(raw_message: str, result: SendResult)`. The raw string contains the fully rendered RFC 5322 message (including the generated `Message-ID` header). Use the `SendResult` helper to check whether delivery succeeded for all recipients or to inspect per‑recipient failures.
 
 ```python
+from email import message_from_string
 from reputils.MailReport import EmailAddress, SMTPServerInfo, MRSendmail
 
 server = SMTPServerInfo(
@@ -72,7 +75,7 @@ server = SMTPServerInfo(
     smtp_port=587,
     smtp_user="user@example.com",
     smtp_pass="app-password",
-    useStartTLS=True,
+    use_start_tls=True,
 )
 
 mailer = MRSendmail(
@@ -82,17 +85,79 @@ mailer = MRSendmail(
     subject="Hello from reputils",
 )
 
-mailer.addTo(EmailAddress.fromSTR("Alice <alice@example.com>"))
+mailer.add_to(EmailAddress.from_str("Alice <alice@example.com>"))
 
-message_id = mailer.send(
+raw, res = mailer.send(
     txt="Plain text body",
     html="<p>HTML body</p>",
 )
 
-print("Sent with Message-ID:", message_id)
+print("All recipients succeeded:", res.all_succeeded())
+# Extract the Message-ID from the rendered message if you need it:
+msg = message_from_string(raw)
+print("Message-ID:", msg["Message-ID"])  # e.g. <20250101...@example.com>
 ```
 
-Note: See `reputils/MailReport.py` for more details (Cc/Bcc, attachments, additional headers).
+### Cc/Bcc, attachments, and additional headers
+
+```python
+from pathlib import Path
+from reputils.MailReport import EmailAddress, SMTPServerInfo, MRSendmail
+
+# Create or reuse a mailer instance (example shown inline for completeness)
+server = SMTPServerInfo(smtp_server="smtp.example.com", smtp_port=587, use_start_tls=True)
+mailer = MRSendmail(
+    serverinfo=server,
+    returnpath=EmailAddress(email="bounce@example.com", name="Mailer"),
+    senderfrom=EmailAddress(email="noreply@example.com", name="No Reply"),
+    subject="Monthly report",
+)
+
+mailer.add_to(EmailAddress.from_str("Alice <alice@example.com>"))
+mailer.add_cc(EmailAddress.from_str("Bob <bob@example.com>"))
+mailer.add_bcc(EmailAddress.from_str("carol@example.com"))
+
+raw, res = mailer.send(
+    txt="Report attached.",
+    files=[Path("/tmp/report.txt"), Path("/tmp/plot.png")],
+    additional_headers={
+        "X-Trace-ID": "12345",
+        "List-Id": "example.list.example.com",
+    },
+)
+
+if not res.all_succeeded():
+    # Inspect per‑recipient SMTP errors (email, code, message)
+    for email, code, message in res.get_all_errors():
+        print(f"Failed: {email} -> {code} {message}")
+```
+
+### SMTP and application‑level debug logging per send
+
+```python
+from reputils.MailReport import SMTPServerInfo, MRSendmail, EmailAddress
+
+server = SMTPServerInfo(smtp_server="smtp.example.com", smtp_port=587)
+mailer = MRSendmail(serverinfo=server, returnpath=EmailAddress(email="bounce@example.com"))
+
+# Low‑level smtplib debugging for this call
+raw, res = mailer.send(txt="Hello", wants_smtp_level_debug=True)
+
+# More verbose application‑level logging from MRSendmail for this call
+raw, res = mailer.send(txt="Hello", wantsdebuglogging=True)
+```
+
+### Logging configuration with Loguru (optional)
+
+`MailReport` uses `loguru` for logging. To enable a reasonable default console configuration with a built‑in “skiplog” filter, call:
+
+```python
+from reputils.MailReport import configure_loguru_default_with_skiplog_filter
+
+configure_loguru_default_with_skiplog_filter()
+```
+
+See also `scripts/loguru_skiplog_config_example.py` for a minimal example.
 
 ## Scripts and Automation
 
