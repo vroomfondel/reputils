@@ -1,5 +1,6 @@
 ![mypy and pytests](https://github.com/vroomfondel/reputils/actions/workflows/mypynpytests.yml/badge.svg)
 ![Cumulative Clones](https://img.shields.io/endpoint?logo=github&url=https://gist.githubusercontent.com/vroomfondel/98e7e1bf08bf1bdefdcc68e96985710d/raw/reputils_clone_count.json)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/reputils?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=PyPi+Downloads)](https://pepy.tech/projects/reputils)
 
 [![https://github.com/vroomfondel/reputils/raw/main/Gemini_Generated_Image_reputils_695z2w695z2w695z_250x250.png](https://github.com/vroomfondel/reputils/raw/main/Gemini_Generated_Image_reputils_695z2w695z2w695z_250x250.png)](https://github.com/vroomfondel/reputils)
 
