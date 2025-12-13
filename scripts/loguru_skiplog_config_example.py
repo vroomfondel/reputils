@@ -7,8 +7,8 @@ import reputils.MailReport
 def mrsendmail_apply_loguru_patch(skiplog: bool = False) -> None:
     logger.info(f"mrsendmail_apply_loguru_patch({skiplog=})")
     # print("\n", file=sys.stderr, flush=True, end="")
-    @classmethod
-    def logtest(cls):
+    @classmethod  # type: ignore
+    def logtest(cls) -> None:  # type: ignore
         melo = logger.bind(classname=cls.__qualname__)
         with melo.contextualize(skiplog=skiplog):
             # logger = logger.bind(skiplog=skiplog)
@@ -26,10 +26,10 @@ def mrsendmail_apply_loguru_patch(skiplog: bool = False) -> None:
             #     print("\n", file=sys.stderr, flush=True, end="")
 
     # patch
-    reputils.MailReport.MRSendmail.logtest = logtest
+    reputils.MailReport.MRSendmail.logtest = logtest  # type: ignore[attr-defined]
 
 
-def main():
+def main() -> None:
     logger.info(f"in main()::{__name__=} :: before configuring loguru")
 
     reputils.MailReport.configure_loguru_default_with_skiplog_filter()
@@ -38,7 +38,7 @@ def main():
         mrsendmail_apply_loguru_patch(skiplog=t)
         logger.info(f"reputils.MailReport.MRSendmail.logtest(skiplog={t}) -> start")
         # print("\n", file=sys.stderr, flush=True, end="")
-        reputils.MailReport.MRSendmail.logtest()
+        reputils.MailReport.MRSendmail.logtest()  # type: ignore[attr-defined]
         # print("\n", file=sys.stderr, flush=True, end="")
         logger.info(f"reputils.MailReport.MRSendmail.logtest(skiplog={t}) -> done")
         # print("\n", file=sys.stderr, flush=True, end="")

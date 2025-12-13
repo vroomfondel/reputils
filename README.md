@@ -132,6 +132,34 @@ if not res.all_succeeded():
         print(f"Failed: {email} -> {code} {message}")
 ```
 
+### Unicode (Umlauts/Accents) work out of the box
+
+`MailReport` composes messages using UTF‑8 and quoted‑printable encodings for both headers and bodies. That means subjects, display names, and message content with Umlauts and other non‑ASCII characters are sent correctly (e.g. Ä Ö Ü ä ö ü ß, accents like é, ñ, ą, …).
+
+Example:
+
+```python
+from reputils.MailReport import EmailAddress, SMTPServerInfo, MRSendmail
+
+server = SMTPServerInfo(smtp_server="smtp.example.com", smtp_port=587, use_start_tls=True)
+mailer = MRSendmail(
+    serverinfo=server,
+    returnpath=EmailAddress(email="bounce@example.com", name="Mailer"),
+    senderfrom=EmailAddress(email="noreply@example.com", name="München Prüfstelle"),
+    subject="Status für Prüfstände – Größe ist größer",
+)
+
+mailer.add_to(EmailAddress(email="alice@example.com", name="Jörg Hübner"))
+
+txt_body = "Hallo Jörg, die Größe ist größer als erwartet. Grüße aus München!"
+html_body = "<p>Hallo Jörg, die Größe ist <b>größer</b> als erwartet. Grüße aus München!</p>"
+
+raw, res = mailer.send(txt=txt_body, html=html_body)
+assert res.all_succeeded()
+```
+
+No additional configuration is required; Python’s `email` package handles RFC 2047/2045 encoding under the hood, and `reputils.MailReport` sets sane UTF‑8 defaults.
+
 ### SMTP and application‑level debug logging per send
 
 ```python
