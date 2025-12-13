@@ -48,7 +48,7 @@ isort: venv
 
 tcheck: venv
 	@$(venv_activated)
-	mypy reputils
+	mypy scripts reputils
 
 
 .git/hooks/pre-commit: venv
