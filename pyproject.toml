@@ -25,7 +25,7 @@ packages = ["reputils"]
 
 [project]
 name = "reputils"
-version = "0.0.14"
+version = "0.0.15"
 authors = [
   { name="Henning Thieß", email="ht@xomox.cc" },
 ]
