@@ -51,7 +51,8 @@ classifiers = [
     "Topic :: Communications :: Email",
     "Topic :: Communications :: Email :: Email Clients (MUA)",
 
-    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    # "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 
