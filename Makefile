@@ -27,7 +27,7 @@ venv: .venv/touchfile
 	@if [ -z "$${GITHUB_RUN_ID}" ]; then \
 		test -d .venv || python3.14 -m venv .venv; \
 		source .venv/bin/activate; \
-		pip install -r requirements-dev.txt; \
+		pip install -r requirements-build.txt; \
 		touch .venv/touchfile; \
 	else \
   		echo "Skipping venv setup because GITHUB_RUN_ID is set"; \
@@ -62,17 +62,15 @@ commit-checks: .git/hooks/pre-commit
 prepare: tests commit-checks
 
 # REPUTILS_SOURCES := $(shell find reputils -type f -name '*.py' 2>/dev/null)
-REPUTILS_SOURCES := reputils/*.py
+REPUTILS_SOURCES := reputils/*
 VENV_DEPS := requirements.txt requirements-dev.txt requirements-build.txt
 
-VERSION := $(shell egrep -m 1 ^version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | tr -d " " | cut -d'=' -f2)
+# VERSION := $(shell egrep -m 1 ^version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | tr -d " " | cut -d'=' -f2)
+VERSION := $(shell $(venv_activated) > /dev/null 2>&1 && hatch version 2>/dev/null || echo HATCH_NOT_FOUND)
 
 dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl dist/.touchfile: $(REPUTILS_SOURCES) $(VENV_DEPS) pyproject.toml
+	@printf "VERSION: $(VERSION)\n"
 	@$(venv_activated)
-	rm -vf dist/reputils-*
-	pip install -r requirements-build.txt
-	# pip install --upgrade twine build
-	# python3 -m build
 	# hatch version fix  # would bump version
 	hatch build --clean
 	@touch dist/.touchfile
