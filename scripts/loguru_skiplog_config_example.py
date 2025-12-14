@@ -1,7 +1,6 @@
-import os
-import sys
-
 from loguru import logger
+
+import reputils
 import reputils.MailReport
 
 def mrsendmail_apply_loguru_patch(skiplog: bool = False) -> None:
@@ -32,7 +31,7 @@ def mrsendmail_apply_loguru_patch(skiplog: bool = False) -> None:
 def main() -> None:
     logger.info(f"in main()::{__name__=} :: before configuring loguru")
 
-    reputils.MailReport.configure_loguru_default_with_skiplog_filter()
+    reputils.configure_loguru_default_with_skiplog_filter()
 
     for t in [False, True]:
         mrsendmail_apply_loguru_patch(skiplog=t)
