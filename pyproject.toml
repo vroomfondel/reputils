@@ -1,16 +1,11 @@
 [build-system]
-# Metadata-Version: 2.3
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-#[tool.hatch.build.sources]
-#"reputils" = "reputils"
-
 [tool.hatch.build]
 # ignore-vcs = true
-#only-packages = true
+# only-packages = true
 packages = ["reputils"]
-#packages = ["reputils", "tests"]
 #artifacts = [
 #  "pytest.ini",
 #  ".mypy.ini"
@@ -25,18 +20,42 @@ packages = ["reputils"]
 
 [project]
 name = "reputils"
-version = "0.0.15"
+# version = "0.0.3"
+dynamic = ["version"]
 authors = [
   { name="Henning Thieß", email="ht@xomox.cc" },
 ]
-description = "REPUTILS"
+description = "reputils"
 readme = "README.md"
 requires-python = ">=3.12"
+license-files = ["LICENSE.md"]
+
+keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
+
+# https://pypi.org/classifiers/
+# https://github.com/pypa/trove-classifiers/blob/main/src/trove_classifiers/__init__.py
 classifiers = [
+    #   3 - Alpha
+    #   4 - Beta
+    #   5 - Production/Stable
+    "Development Status :: 5 - Production/Stable",
+
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+#    "Programming Language :: Python :: 3.13",
+#    "Programming Language :: Python :: 3.14",
+
+    #"Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet",
+    "Topic :: Communications :: Email",
+    "Topic :: Communications :: Email :: Email Clients (MUA)",
+
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
     "Operating System :: OS Independent",
 ]
+
 
 dependencies = [
     'loguru>=0.7.3',
@@ -49,7 +68,21 @@ dependencies = [
 #    'pytest==7.1.3'
 #]
 
+
 [project.urls]
-"Homepage" = "https://github.com/vroomfondel/reputils"
+Homepage = "https://github.com/vroomfondel/reputils"
+Repository = "https://github.com/vroomfondel/reputils"
+Issues = "https://github.com/vroomfondel/reputils/issues"
+# Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
 # "Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
+
+
+[tool.hatch.version]
+path = "reputils/__init__.py"
+# pattern = "BUILD = 'b(?P<version>[^']+)'"
+
+
+
+
+
 
