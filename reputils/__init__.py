@@ -38,7 +38,9 @@ def _loguru_skiplog_filter(record: dict) -> bool:
     return not record.get("extra", {}).get("skiplog", False)
 
 
-def configure_loguru_default_with_skiplog_filter(loguru_filter: Callable[[Dict[str, Any]], bool]= _loguru_skiplog_filter) -> None:
+def configure_loguru_default_with_skiplog_filter(
+    loguru_filter: Callable[[Dict[str, Any]], bool] = _loguru_skiplog_filter,
+) -> None:
     """Configure a default ``loguru`` sink with a convenient format and filter.
 
     This sets a colored formatter, applies the given filter (by default
@@ -54,7 +56,9 @@ def configure_loguru_default_with_skiplog_filter(loguru_filter: Callable[[Dict[s
 
     os.environ["LOGURU_LEVEL"] = os.getenv("LOGURU_LEVEL", "DEBUG")  # standard is DEBUG
     glogger.remove()  # remove default-handler
-    logger_fmt: str = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{module}</cyan>::<cyan>{extra[classname]}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+    logger_fmt: str = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{module}</cyan>::<cyan>{extra[classname]}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+    )
     # logger_fmt: str = "<g>{time:HH:mm:ssZZ}</> | <lvl>{level}</> | <c>{module}::{extra[classname]}:{function}:{line}</> - {message}"
 
     glogger.add(sys.stderr, level=os.getenv("LOGURU_LEVEL"), format=logger_fmt, filter=loguru_filter)  # type: ignore # TRACE | DEBUG | INFO | WARN | ERROR |  FATAL

@@ -3,8 +3,10 @@ from loguru import logger
 import reputils
 import reputils.MailReport
 
+
 def mrsendmail_apply_loguru_patch(skiplog: bool = False) -> None:
     logger.info(f"mrsendmail_apply_loguru_patch({skiplog=})")
+
     # print("\n", file=sys.stderr, flush=True, end="")
     @classmethod  # type: ignore
     def logtest(cls) -> None:  # type: ignore

@@ -80,9 +80,12 @@ class SendResult:
           recipient's SMTP error.
         - ``all_succeeded()`` is a convenience to check for zero failures.
     """
+
     num_recipients: int
     num_failed: int
-    fail_exceptions: Optional[List[smtplib.SMTPRecipientsRefused|smtplib.SMTPSenderRefused|smtplib.SMTPResponseException]] = field(default=None)
+    fail_exceptions: Optional[
+        List[smtplib.SMTPRecipientsRefused | smtplib.SMTPSenderRefused | smtplib.SMTPResponseException]
+    ] = field(default=None)
 
     def get_all_errors(self) -> List[Tuple[str, int, str]]:
         """Collect all per-recipient SMTP errors from the send attempt.
@@ -118,7 +121,7 @@ class SendResult:
 
         return ret
 
-    def get_error_for_recipient(self, recipient: EmailAddress) -> Tuple[int, str]|None:
+    def get_error_for_recipient(self, recipient: EmailAddress) -> Tuple[int, str] | None:
         """Return the SMTP error for a specific recipient, if available.
 
         Looks through ``fail_exceptions`` for a per-recipient entry matching
@@ -549,10 +552,7 @@ class MRSendmail:
 
         logger.debug(f"{sendme=}")
 
-        sr: SendResult = SendResult(
-            num_recipients=len(self.tos) + len(self.ccs) + len(self.bccs),
-            num_failed=0
-        )
+        sr: SendResult = SendResult(num_recipients=len(self.tos) + len(self.ccs) + len(self.bccs), num_failed=0)
 
         with smtplib.SMTP(self.serverinfo.smtp_server, self.serverinfo.smtp_port) as server:
             if self.serverinfo.wantsdebug or wants_smtp_level_debug:
@@ -608,7 +608,9 @@ class MRSendmail:
 
                     if wantsdebuglogging:
                         for failed_recipient, (smtp_error_code, smtp_error_msg_bytes) in failed_recipients.items():
-                            logger.debug(f"Failed to send to: {failed_recipient} SMTP-ERROR-CODE: {smtp_error_code} SMTP-ERROR-MESSAGE: {smtp_error_msg_bytes.decode("utf-8")}")  # probably rather ascii
+                            logger.debug(
+                                f"Failed to send to: {failed_recipient} SMTP-ERROR-CODE: {smtp_error_code} SMTP-ERROR-MESSAGE: {smtp_error_msg_bytes.decode("utf-8")}"
+                            )  # probably rather ascii
                 elif wantsdebuglogging:
                     logger.debug("Sending (in terms of delivery into smtp-server) to all recipients was successfull.")
 
@@ -631,4 +633,3 @@ class MRSendmail:
                 server.quit()
 
         return message.as_string(), sr
-
