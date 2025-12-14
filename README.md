@@ -181,7 +181,8 @@ raw, res = mailer.send(txt="Hello", wantsdebuglogging=True)
 `MailReport` uses `loguru` for logging. To enable a reasonable default console configuration with a built‑in “skiplog” filter, call:
 
 ```python
-from reputils.MailReport import configure_loguru_default_with_skiplog_filter
+
+from reputils import configure_loguru_default_with_skiplog_filter
 
 configure_loguru_default_with_skiplog_filter()
 ```
