@@ -30,8 +30,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license-files = ["LICENSE.md"]
 
-keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
-
+keywords = ["python", "utilities", "email", "logging", "loguru", "smtp", "mail-report", "pytz", "dateutil"]
 # https://pypi.org/classifiers/
 # https://github.com/pypa/trove-classifiers/blob/main/src/trove_classifiers/__init__.py
 classifiers = [
