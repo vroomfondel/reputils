@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple, Dict, ClassVar
 # from dateutil.tz import gettz
 import pytz
 
+import loguru
 from loguru import logger as glogger
 
 # logger_fmt: str = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{module}</cyan>::<cyan>{extra[classname]}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
@@ -328,7 +329,7 @@ class MRSendmail:
         True
     """
 
-    logger: ClassVar = glogger.bind(classname=__qualname__)
+    logger: ClassVar["loguru.Logger"] = glogger.bind(classname=__qualname__)
 
     serverinfo: SMTPServerInfo
     returnpath: EmailAddress  # das ist der im MAIL FROM: header im smtp
