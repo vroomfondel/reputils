@@ -5,6 +5,7 @@ import sys
 from typing import Callable, Dict, Any
 
 from loguru import logger as glogger
+
 glogger.disable(__name__)
 
 
