@@ -13,7 +13,7 @@ Small Python utilities packaged as a library. Currently includes helpers for ass
 
 ## Overview
 
-This package exposes functionality under the `reputils` module. The main user‑facing component at present is `reputils.MailReport` providing:
+This package exposes functionality under the `reputils` module. The main user‑facing component at present is `reputils` providing:
 
 - `EmailAddress` dataclass for parsing/formatting email addresses
 - `SMTPServerInfo` configuration for SMTP host/port/TLS/etc.
@@ -69,7 +69,7 @@ The `make install` target creates/uses a local `.venv` and installs dev requirem
 
 ```python
 from email import message_from_string
-from reputils.MailReport import EmailAddress, SMTPServerInfo, MRSendmail
+from reputils import EmailAddress, SMTPServerInfo, MRSendmail
 
 server = SMTPServerInfo(
     smtp_server="smtp.example.com",
@@ -103,7 +103,7 @@ print("Message-ID:", msg["Message-ID"])  # e.g. <20250101...@example.com>
 
 ```python
 from pathlib import Path
-from reputils.MailReport import EmailAddress, SMTPServerInfo, MRSendmail
+from reputils import EmailAddress, SMTPServerInfo, MRSendmail
 
 # Create or reuse a mailer instance (example shown inline for completeness)
 server = SMTPServerInfo(smtp_server="smtp.example.com", smtp_port=587, use_start_tls=True)
@@ -140,7 +140,7 @@ if not res.all_succeeded():
 Example:
 
 ```python
-from reputils.MailReport import EmailAddress, SMTPServerInfo, MRSendmail
+from reputils import EmailAddress, SMTPServerInfo, MRSendmail
 
 server = SMTPServerInfo(smtp_server="smtp.example.com", smtp_port=587, use_start_tls=True)
 mailer = MRSendmail(
@@ -159,12 +159,12 @@ raw, res = mailer.send(txt=txt_body, html=html_body)
 assert res.all_succeeded()
 ```
 
-No additional configuration is required; Python’s `email` package handles RFC 2047/2045 encoding under the hood, and `reputils.MailReport` sets sane UTF‑8 defaults.
+No additional configuration is required; Python’s `email` package handles RFC 2047/2045 encoding under the hood, and `reputils` sets sane UTF‑8 defaults.
 
 ### SMTP and application‑level debug logging per send
 
 ```python
-from reputils.MailReport import SMTPServerInfo, MRSendmail, EmailAddress
+from reputils import SMTPServerInfo, MRSendmail, EmailAddress
 
 server = SMTPServerInfo(smtp_server="smtp.example.com", smtp_port=587)
 mailer = MRSendmail(serverinfo=server, returnpath=EmailAddress(email="bounce@example.com"))
