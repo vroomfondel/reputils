@@ -420,7 +420,8 @@ class MRSendmail:
           quoted-printable encoded words. ``Date`` is the current time in
           Europe/Berlin.
         - Message-ID: Uses provided ``msgid`` or generates one via
-          ``email.utils.make_msgid``, taking the domain from the last of
+          ``email.utils.make_msgid``, taking the domain (the part after the
+          last ``@`` of the bare address) from the last of
           ``From``/``Reply-To``/``Return-Path`` that is set.
         - SMTP envelope: Sender is ``returnpath``; recipients are the union of
           ``tos``, ``ccs``, and ``bccs``.
@@ -504,13 +505,13 @@ class MRSendmail:
 
         if fromme:
             message.add_header("From", fromme.formataddr_self())
-            fromdomain = fromme.formataddr_self().split("@")[1]
+            fromdomain = fromme.email.rsplit("@", 1)[1]
         if self.replyto:
             message.add_header("Reply-To", self.replyto.formataddr_self())
-            fromdomain = self.replyto.formataddr_self().split("@")[1]
+            fromdomain = self.replyto.email.rsplit("@", 1)[1]
         if self.returnpath:
             message.add_header("Return-Path", self.returnpath.formataddr_self())
-            fromdomain = self.returnpath.formataddr_self().split("@")[1]
+            fromdomain = self.returnpath.email.rsplit("@", 1)[1]
 
         logger.debug(f"{fromdomain=}")
         if msgid is not None:

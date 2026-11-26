@@ -5,6 +5,7 @@ any network access, so the package can be checked against different
 dependency versions.
 """
 
+import re
 import smtplib
 from email import message_from_string
 from email.header import decode_header, make_header
@@ -101,7 +102,7 @@ def test_send_text_renders_headers_and_envelope() -> None:
     assert msg["Return-Path"] == "Mailer <bounce@example.com>"
     assert _hdr(msg["X-Trace-ID"]) == "12345"
     # Message-ID domain is taken from the last of From/Reply-To/Return-Path that is set.
-    assert msg["Message-ID"].endswith("@example.com>")
+    assert re.fullmatch(r"<[^<>@]+@example\.com>", msg["Message-ID"])
     body = msg.get_payload(decode=True)
     assert isinstance(body, bytes) and body.decode("utf-8").strip() == "Grüße aus München"
 
@@ -142,6 +143,18 @@ def test_send_txt_html_and_attachment_is_multipart(tmp_path: Path) -> None:
     (smtp,) = FakeSMTP.instances
     assert smtp.calls == ["ehlo", "starttls", "ehlo", "quit"]
     assert smtp.login_args == ("u", "p")
+
+
+def test_generated_message_id_uses_address_domain_in_multipart() -> None:
+    # Multipart (compat32) messages render the Message-ID verbatim, so a domain taken from the
+    # formatted "Name <user@domain>" string used to leak the closing ">" into it.
+    m = _mailer()
+    m.replyto = EmailAddress(email="reply@example.net", name="Reply Desk")
+    raw, _ = m.send(txt="plain", html="<p>html</p>")
+
+    msg = message_from_string(raw)
+    assert msg.get_content_type() == "multipart/mixed"
+    assert re.fullmatch(r"<[^<>@]+@example\.com>", msg["Message-ID"])
 
 
 def test_send_requires_body() -> None:
