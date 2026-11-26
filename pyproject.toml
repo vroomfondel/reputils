@@ -27,7 +27,7 @@ authors = [
 ]
 description = "reputils"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 license-files = ["LICENSE.md"]
 
 keywords = ["python", "utilities", "email", "logging", "loguru", "smtp", "mail-report", "pytz"]
@@ -40,9 +40,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
 
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-#    "Programming Language :: Python :: 3.13",
-#    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.14",
 
     #"Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries",

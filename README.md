@@ -23,7 +23,7 @@ There is also a maintenance script `scripts/update_badge.py` that is run in GitH
 
 ## Stack
 
-- Language: Python (requires Python >= 3.12; CI uses Python 3.14)
+- Language: Python (requires Python >= 3.14, which also CI uses)
 - Packaging/build: Hatchling (`pyproject.toml`)
 - Testing: pytest
 - Lint/format: black, isort, mypy
@@ -40,7 +40,7 @@ Development dependencies (see `requirements-dev.txt`):
 
 - `pytest`, `mypy`, `black`, `isort`, `pre-commit`, and typing stubs for pytz
 
-Python version: `>=3.12`. The repo’s Makefile and CI use Python 3.14 locally/in CI.
+Python version: `>=3.14`. The repo’s Makefile and CI use Python 3.14 locally/in CI.
 
 ## Installation
 
