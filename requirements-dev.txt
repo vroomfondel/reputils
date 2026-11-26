@@ -5,7 +5,7 @@ pyrefly
 pre-commit>=4.7
 
 # linting
-isort==9.0.*
+isort>=9.0
 black>=26.10.1
 mypy>=2.4.1
 
