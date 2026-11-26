@@ -66,7 +66,7 @@ def fake_smtp(monkeypatch: pytest.MonkeyPatch) -> type[FakeSMTP]:
     FakeSMTP.instances = []
     FakeSMTP.refused = {}
     FakeSMTP.raise_on_send = None
-    monkeypatch.setattr(mr.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr("reputils.MailReport.smtplib.SMTP", FakeSMTP)
     return FakeSMTP
 
 

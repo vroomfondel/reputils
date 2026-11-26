@@ -12,7 +12,7 @@ from email.utils import format_datetime as formatdate_ext
 from email.utils import formataddr as formataddr_ext
 from email.utils import parseaddr
 from pathlib import Path
-from typing import List, Optional, Tuple, Dict, ClassVar
+from typing import ClassVar, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import pytz
 
@@ -43,7 +43,7 @@ from loguru import logger as glogger
 # cs.body_encoding = charset.QP
 # message = MIMEText(your_body_here, 'plain', cs)
 
-_csqp = charset.Charset("utf-8")
+_csqp: charset.Charset = charset.Charset("utf-8")
 _csqp.header_encoding = charset.QP
 _csqp.body_encoding = charset.QP
 _tzberlin: datetime.tzinfo = pytz.timezone("Europe/Berlin")
@@ -200,7 +200,7 @@ class EmailAddress:
         Returns:
             An ``EmailAddress`` instance with ``name`` and ``email`` set.
         """
-        tp: Tuple[str | None, str] = parseaddr(ema)
+        tp: Tuple[str, str] = parseaddr(ema)
         return EmailAddress(name=tp[0], email=tp[1])
 
     @staticmethod
@@ -227,7 +227,7 @@ class EmailAddress:
         return EmailAddress.formataddr(self)
 
 
-def _formatdate(dt: datetime.datetime, tz: datetime.tzinfo = _tzberlin) -> str:  # type: ignore
+def _formatdate(dt: datetime.datetime, tz: datetime.tzinfo = _tzberlin) -> str:
     """Format a datetime as an RFC 2822 compliant Date header value.
 
     The datetime is converted to the provided timezone before formatting.
@@ -368,11 +368,11 @@ class MRSendmail:
         self,
         txt: Optional[str] = None,
         html: Optional[str] = None,
-        files: Optional[List[Path]] = None,
+        files: Optional[Sequence[Path]] = None,
         msgid: Optional[str] = None,
         wantsdebuglogging: bool = False,
         wants_smtp_level_debug: bool = False,
-        additional_headers: Optional[Dict[str, str]] = None,
+        additional_headers: Optional[Mapping[str, str]] = None,
     ) -> Tuple[str, SendResult]:
         """Build, deliver, and return the serialized email message.
 
@@ -445,7 +445,7 @@ class MRSendmail:
         if files is not None and len(files) > 0:
             kk += 1
 
-        message: EmailMessage | MIMEMultipart = EmailMessage() if kk == 1 else MIMEMultipart()
+        message: EmailMessage[str, str] | MIMEMultipart = EmailMessage() if kk == 1 else MIMEMultipart()
 
         ################ Set Headers ###################
         fromme: EmailAddress = self.returnpath if not self.senderfrom else self.senderfrom
@@ -494,13 +494,19 @@ class MRSendmail:
         # message.set_payload(txt, _csqp)
 
         if kk == 1:
+            # kk == 1 implies message was created as EmailMessage above
+            assert isinstance(message, EmailMessage)
             if html is not None:
-                message.set_content(html, "html")  # type: ignore
+                message.set_content(html, "html")
                 # message.set_default_type("text/html")
             else:
-                message.set_content(txt, "plain")  # type: ignore
+                # html is None here and the guard above rejects txt and html both being None
+                assert txt is not None
+                message.set_content(txt, "plain")
                 # message.set_default_type("text/plain")
         else:
+            # kk != 1 implies message was created as MIMEMultipart above
+            assert isinstance(message, MIMEMultipart)
             txtpart: Optional[MIMEText] = None
             htmlpart: Optional[MIMEText] = None
 
@@ -514,18 +520,22 @@ class MRSendmail:
                 # htmlpart.set_charset(_csqp)
 
             if hastxtandhtml:
+                # hastxtandhtml implies both parts were built above
+                assert txtpart is not None and htmlpart is not None
                 submsg: MIMEMultipart = MIMEMultipart("alternative")
-                submsg.attach(txtpart)  # type: ignore
-                submsg.attach(htmlpart)  # type: ignore
-                message.attach(submsg)  # type: ignore
+                submsg.attach(txtpart)
+                submsg.attach(htmlpart)
+                message.attach(submsg)
             else:
                 if txtpart is not None:
-                    message.attach(txtpart)  # type: ignore
+                    message.attach(txtpart)
                 if htmlpart is not None:
-                    message.attach(htmlpart)  # type: ignore
+                    message.attach(htmlpart)
 
         ############# Add Attachments #############################
         if files:
+            # a non-empty files list makes kk >= 2 (a body is mandatory), so message is a MIMEMultipart
+            assert isinstance(message, MIMEMultipart)
             for path in files:
                 # mime_type, encoding = mimetypes.guess_type(str(path.absolute()))
                 # print(f"{path=} {mime_type=} {encoding=}")
@@ -540,12 +550,13 @@ class MRSendmail:
                     part.set_payload(file.read())
                 encoders.encode_base64(part)
                 part.add_header("Content-Disposition", "attachment; filename={}".format(path.name))
-                message.attach(part)  # type: ignore
+                message.attach(part)
 
         # sendme ist der technische sender im "MAIL FROM: {}"-header
-        sendme: str = EmailAddress.formataddr(
-            self.senderfrom if not self.returnpath else self.returnpath  # type: ignore
-        )
+        envelope_sender: Optional[EmailAddress] = self.senderfrom if not self.returnpath else self.returnpath
+        # returnpath is typed non-optional, so the senderfrom fallback (for untyped callers passing returnpath=None)
+        # is Optional to mypy; narrowing it would replace today's AttributeError with a different exception
+        sendme: str = EmailAddress.formataddr(envelope_sender)  # type: ignore[arg-type]
         rcpts: list[str] = [k.formataddr_self() for k in self.tos + self.ccs + self.bccs]
 
         logger.debug(f"{sendme=}")

@@ -2,14 +2,18 @@ __version__ = "0.0.17"
 
 import os
 import sys
-from typing import Callable, Dict, Any
+from typing import TYPE_CHECKING, Callable, Mapping
 
 from loguru import logger as glogger
+
+if TYPE_CHECKING:
+    # ``loguru.Record`` only exists in loguru's type stubs, not at runtime
+    from loguru import Record
 
 glogger.disable(__name__)
 
 
-def _loguru_skiplog_filter(record: dict) -> bool:
+def _loguru_skiplog_filter(record: "Record") -> bool:
     """Filter function to hide records with ``extra['skiplog']`` set.
 
     Intended for use with ``loguru``'s ``filter=`` parameter so that callers can
@@ -37,11 +41,12 @@ def _loguru_skiplog_filter(record: dict) -> bool:
     #     "thread": RecordThread,    # Thread-Info (id, name)
     #     "time": datetime           # Zeitstempel des Log-Eintrags
     # }
-    return not record.get("extra", {}).get("skiplog", False)
+    extra: Mapping[str, object] = record.get("extra", {})
+    return not extra.get("skiplog", False)
 
 
 def configure_loguru_default_with_skiplog_filter(
-    loguru_filter: Callable[[Dict[str, Any]], bool] = _loguru_skiplog_filter,
+    loguru_filter: Callable[["Record"], bool] = _loguru_skiplog_filter,
 ) -> None:
     """Configure a default ``loguru`` sink with a convenient format and filter.
 
@@ -63,8 +68,12 @@ def configure_loguru_default_with_skiplog_filter(
     )
     # logger_fmt: str = "<g>{time:HH:mm:ssZZ}</> | <lvl>{level}</> | <c>{module}::{extra[classname]}:{function}:{line}</> - {message}"
 
-    glogger.add(sys.stderr, level=os.getenv("LOGURU_LEVEL"), format=logger_fmt, filter=loguru_filter)  # type: ignore # TRACE | DEBUG | INFO | WARN | ERROR |  FATAL
+    # TRACE | DEBUG | INFO | WARN | ERROR |  FATAL
+    glogger.add(sys.stderr, level=os.environ["LOGURU_LEVEL"], format=logger_fmt, filter=loguru_filter)
     glogger.configure(extra={"classname": "None", "skiplog": False})
 
 
-from .MailReport import EmailAddress, MRSendmail, SendResult, SMTPServerInfo
+from .MailReport import EmailAddress as EmailAddress
+from .MailReport import MRSendmail as MRSendmail
+from .MailReport import SendResult as SendResult
+from .MailReport import SMTPServerInfo as SMTPServerInfo
