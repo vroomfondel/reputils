@@ -60,7 +60,7 @@ classifiers = [
 dependencies = [
     'loguru>=0.7.3',
     'pytz>=2025.2',
-    'python-dateutil==2.9.*'
+    'python-dateutil>=2.9'
 ]
 
 #[project.optional-dependencies]
