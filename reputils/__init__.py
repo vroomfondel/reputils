@@ -9,7 +9,7 @@ library is silent by default; callers opt in with
 ``logger.enable("reputils")``.
 """
 
-__version__ = "0.0.17"
+__version__ = "0.0.18"
 
 import os
 import sys
