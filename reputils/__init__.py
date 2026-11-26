@@ -1,3 +1,14 @@
+"""Small utilities for composing and sending e-mail reports, logging via loguru.
+
+Re-exports the public mail API (:class:`EmailAddress`, :class:`SMTPServerInfo`,
+:class:`SendResult`, :class:`MRSendmail`) from :mod:`reputils.MailReport` and
+provides :func:`configure_loguru_default_with_skiplog_filter`.
+
+Importing this package calls ``loguru.logger.disable("reputils")``, so the
+library is silent by default; callers opt in with
+``logger.enable("reputils")``.
+"""
+
 __version__ = "0.0.17"
 
 import os
@@ -21,10 +32,11 @@ def _loguru_skiplog_filter(record: "Record") -> bool:
     ``skiplog=True`` on the logger.
 
     Args:
-        record (dict): Loguru record dictionary.
+        record: Loguru record dictionary.
 
     Returns:
-        bool: ``True`` to keep the record, ``False`` to skip it.
+        ``True`` to keep the record, ``False`` if ``record["extra"]["skiplog"]``
+        is truthy.
     """
     # {
     #     "elapsed": timedelta,      # Zeit seit Programmstart
@@ -54,9 +66,23 @@ def configure_loguru_default_with_skiplog_filter(
     :func:`_loguru_skiplog_filter`), and ensures a reasonable default log level
     via the ``LOGURU_LEVEL`` environment variable.
 
+    Side effects on global state:
+
+    - Sets ``os.environ["LOGURU_LEVEL"]`` to its current value, or to
+      ``"DEBUG"`` if unset.
+    - Removes **all** existing handlers of the global ``loguru`` logger,
+      including ones added by the application.
+    - Adds a single ``sys.stderr`` sink at that level whose format references
+      ``{extra[classname]}``.
+    - Replaces the logger's global ``extra`` defaults with
+      ``{"classname": "None", "skiplog": False}``.
+
+    It does not re-enable the ``reputils`` logger that is disabled on import;
+    call ``logger.enable("reputils")`` for that.
+
     Args:
-        loguru_filter: A callable taking a record dict and returning ``True``
-            if the record should be emitted. Defaults to
+        loguru_filter: A callable taking a loguru record and returning
+            ``True`` if the record should be emitted. Defaults to
             :func:`_loguru_skiplog_filter`.
     """
     glogger.info("configure_loguru_default_with_skiplog_filter")

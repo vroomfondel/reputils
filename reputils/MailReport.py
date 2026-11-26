@@ -1,3 +1,13 @@
+"""Compose and send e-mail messages via SMTP.
+
+Provides :class:`EmailAddress`, :class:`SMTPServerInfo`, :class:`SendResult`
+and :class:`MRSendmail`. Header values (subject, display names, additional
+headers) are encoded with a shared UTF-8 quoted-printable charset, and ``Date``
+headers are rendered in the Europe/Berlin timezone. Log records are emitted via
+``loguru`` under the ``reputils`` package name, which is disabled on import of
+``reputils`` until the caller enables it.
+"""
+
 import datetime
 
 import smtplib
@@ -61,15 +71,12 @@ class SendResult:
     error information can be inspected.
 
     Attributes:
-        num_recipients (int):
-            Total number of recipients that were attempted during the send.
-        num_failed (int):
-            Number of recipients for which delivery failed.
-        fail_exceptions (list[SMTPRecipientsRefused | SMTPSenderRefused |
-            SMTPResponseException] | None):
-            Collected exceptions raised by the SMTP layer while sending. May be
-            ``None`` when no failures occurred or when the sending code opted
-            not to keep exception details.
+        num_recipients: Total number of recipients that were attempted during
+            the send.
+        num_failed: Number of recipients for which delivery failed.
+        fail_exceptions: Collected exceptions raised by the SMTP layer while
+            sending. May be ``None`` when no failures occurred or when the
+            sending code opted not to keep exception details.
 
     Notes:
         - Use ``get_all_errors()`` to flatten per-recipient SMTP errors into a
@@ -95,15 +102,19 @@ class SendResult:
         and the decoded textual error message.
 
         Returns:
-            list[tuple[str, int, str]]: A list of ``(email, code, message)``
-            tuples. Returns an empty list when there are no recorded failures
-            or when none of the exceptions include per-recipient details.
+            A list of ``(email, code, message)`` tuples. Returns an empty list
+            when there are no recorded failures or when none of the exceptions
+            include per-recipient details.
 
         Notes:
             - Only exceptions that provide a ``recipients`` attribute are
               considered; other exception types are ignored here.
             - Error messages are decoded from bytes using UTF-8 (messages may
               also be ASCII-compatible).
+            - Logs a debug record when ``fail_exceptions`` is ``None``.
+
+        Raises:
+            UnicodeDecodeError: If an SMTP error message is not valid UTF-8.
         """
         ret: List[Tuple[str, int, str]] = []
 
@@ -128,12 +139,15 @@ class SendResult:
         encountered is returned.
 
         Args:
-            recipient (EmailAddress): The recipient whose error information is
-                requested.
+            recipient: The recipient whose error information is requested.
+                Only its ``email`` is compared (exact, case-sensitive match).
 
         Returns:
-            tuple[int, str] | None: ``(code, message)`` when an error entry for
-            the recipient exists; otherwise ``None``.
+            ``(code, message)`` when an error entry for the recipient exists;
+            otherwise ``None``.
+
+        Raises:
+            UnicodeDecodeError: If the SMTP error message is not valid UTF-8.
 
         Notes:
             The error message is decoded from bytes using UTF-8 (messages may
@@ -155,7 +169,7 @@ class SendResult:
         """Whether delivery succeeded for all recipients.
 
         Returns:
-            bool: ``True`` if no failures were recorded, else ``False``.
+            ``True`` if ``num_failed`` is zero, else ``False``.
         """
         return self.num_failed == 0
 
@@ -163,8 +177,9 @@ class SendResult:
         """Whether delivery failed for all recipients.
 
         Returns:
-            bool: ``True`` if ``num_failed`` equals ``num_recipients``, else
-            ``False``.
+            ``True`` if ``num_failed`` equals ``num_recipients``, else
+            ``False``. Note that this is also ``True`` when there were no
+            recipients at all.
         """
         return self.num_failed == self.num_recipients
 
@@ -198,7 +213,9 @@ class EmailAddress:
             ema: Address string to parse.
 
         Returns:
-            An ``EmailAddress`` instance with ``name`` and ``email`` set.
+            An ``EmailAddress`` instance with ``name`` and ``email`` set. When
+            the input carries no display name, ``name`` is the empty string
+            (not ``None``); unparsable input yields ``("", "")``.
         """
         tp: Tuple[str, str] = parseaddr(ema)
         return EmailAddress(name=tp[0], email=tp[1])
@@ -233,7 +250,8 @@ def _formatdate(dt: datetime.datetime, tz: datetime.tzinfo = _tzberlin) -> str:
     The datetime is converted to the provided timezone before formatting.
 
     Args:
-        dt: The datetime to format.
+        dt: The datetime to format. A naive datetime is interpreted as local
+            system time by ``datetime.astimezone``.
         tz: The timezone to convert ``dt`` into before formatting. Defaults to
             Europe/Berlin.
 
@@ -255,13 +273,17 @@ class SMTPServerInfo:
 
     Attributes:
         smtp_server: Hostname or IP address of the SMTP server.
-        smtp_port: Port number used to connect to the server.
-        smtp_user: Optional username for authentication.
+        smtp_port: Port number used to connect to the server. Defaults to 25.
+        smtp_user: Optional username for authentication. Login is only
+            attempted when both ``smtp_user`` and ``smtp_pass`` are non-empty.
         smtp_pass: Optional password for authentication.
         use_start_tls: Whether to upgrade the connection via STARTTLS.
-        wantsdebug: If true, enables SMTP debug output on the connection.
-        ignoresslerrors: If true, disables certificate verification when
-            using STARTTLS (use with caution).
+            Defaults to ``False``.
+        wantsdebug: If true, enables ``smtplib`` debug output (level 1) on
+            every connection. Defaults to ``False``.
+        ignoresslerrors: If true, disables certificate and hostname
+            verification when using STARTTLS (use with caution). Defaults to
+            ``True``.
     """
 
     smtp_server: str
@@ -304,10 +326,12 @@ class MRSendmail:
       logging in :meth:`send`.
 
     Attributes:
+        logger: Class-level ``loguru`` logger bound with
+            ``classname="MRSendmail"``.
         serverinfo: SMTP connectivity and security parameters.
         returnpath: Address used for SMTP envelope sender (``MAIL FROM``) and
             ``Return-Path`` header.
-        subject: Message subject line.
+        subject: Message subject line. Defaults to the empty string.
         senderfrom: Optional ``From`` header; falls back to ``returnpath`` if
             omitted.
         replyto: Optional ``Reply-To`` header address.
@@ -318,7 +342,7 @@ class MRSendmail:
 
     Example:
         >>> mailer = MRSendmail(
-        ...     serverinfo=SMTPServerInfo(hostname="smtp.example.com"),
+        ...     serverinfo=SMTPServerInfo(smtp_server="smtp.example.com"),
         ...     returnpath=EmailAddress.from_str("no-reply@example.com"),
         ...     subject="Hello"
         ... )
@@ -382,33 +406,52 @@ class MRSendmail:
         success or failure.
 
         Behavior
-        - Body: At least one of ``txt`` or ``html`` must be provided. If both
-          are provided, a ``multipart/alternative`` part is created. When
-          attachments are present, the top-level message becomes multipart and
-          attachments are added as base64-encoded ``application/octet-stream``.
+        - Body: At least one of ``txt`` or ``html`` must be provided. A single
+          body without attachments is sent as a non-multipart
+          ``EmailMessage``. Otherwise the top-level message is
+          ``multipart/mixed``; if both bodies are given they are nested in a
+          ``multipart/alternative`` part. Attachments are read fully into
+          memory and added as base64-encoded ``application/octet-stream``
+          parts named after ``Path.name``.
         - Headers: ``From``, ``To``, ``Date``, and ``Subject`` are set from the
           instance fields. ``Reply-To`` and ``Return-Path`` are added when
-          available. Additional headers may be supplied via
-          ``additional_headers``.
-        - Message-ID: Uses provided ``msgid`` or generates one using the
-          sender domain.
+          available, ``Cc`` when ``ccs`` is non-empty. ``Subject`` and the
+          values of ``additional_headers`` are encoded as UTF-8
+          quoted-printable encoded words. ``Date`` is the current time in
+          Europe/Berlin.
+        - Message-ID: Uses provided ``msgid`` or generates one via
+          ``email.utils.make_msgid``, taking the domain from the last of
+          ``From``/``Reply-To``/``Return-Path`` that is set.
         - SMTP envelope: Sender is ``returnpath``; recipients are the union of
           ``tos``, ``ccs``, and ``bccs``.
+        - Network: Opens a new SMTP connection to ``serverinfo`` for each
+          call, issues ``EHLO``, optionally ``STARTTLS`` (followed by a second
+          ``EHLO``) and ``LOGIN``, sends the message and always issues
+          ``QUIT``.
+        - Error handling: ``SMTPRecipientsRefused``, ``SMTPSenderRefused`` and
+          other ``SMTPResponseException`` errors raised after connecting
+          (including authentication failures) are logged and recorded in the
+          returned :class:`SendResult` with all recipients counted as failed;
+          they are not re-raised. Partially refused recipients are recorded
+          as a single synthesized ``SMTPRecipientsRefused``.
         - Debugging: ``wants_smtp_level_debug`` enables low-level ``smtplib``
           debug output for this call; ``wantsdebuglogging`` enables extra
-          application-level logging.
+          application-level logging (including the full rendered message) by
+          binding ``skiplog=False`` instead of ``skiplog=True``.
 
         Args:
             txt: Plaintext body content.
             html: HTML body content.
-            files: File paths to attach to the message.
+            files: File paths to attach to the message. ``None`` or an empty
+                sequence means no attachments.
             msgid: Explicit ``Message-ID`` to set; a suitable value is
                 generated if omitted.
             wantsdebuglogging: Emit additional application-level debug logs for
                 this call.
             wants_smtp_level_debug: Enable ``smtplib`` debug output
                 (``SMTP.set_debuglevel(1)``) for this connection.
-            additional_headers: Extra headers to add to the message.
+            additional_headers: Extra headers to add to the message, as
+                header name to (unencoded) value.
 
         Returns:
             A tuple ``(raw_message, result)`` where ``raw_message`` is the full
@@ -417,8 +460,15 @@ class MRSendmail:
 
         Raises:
             Exception: If both ``txt`` and ``html`` are ``None``.
-            OSError: If an attachment file cannot be read.
-            smtplib.SMTPException: For SMTP errors during connection/login/send.
+            OSError: If an attachment file cannot be read, if the connection
+                to the SMTP server cannot be established, or if the STARTTLS
+                handshake fails (``ssl.SSLError``).
+            smtplib.SMTPConnectError: If the server rejects the connection
+                greeting.
+            smtplib.SMTPException: For SMTP errors that are not
+                ``SMTPResponseException`` subclasses, e.g.
+                ``SMTPServerDisconnected`` or ``SMTPNotSupportedError`` when
+                STARTTLS or AUTH is unavailable.
 
         Example:
             >>> raw, res = mailer.send(
@@ -429,7 +479,6 @@ class MRSendmail:
             >>> res.all_succeeded()
             True
         """
-
         logger = self.logger.bind(skiplog=not wantsdebuglogging)  # self.logger is MRSendMail.logger
 
         if txt is None and html is None:
