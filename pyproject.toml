@@ -30,7 +30,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license-files = ["LICENSE.md"]
 
-keywords = ["python", "utilities", "email", "logging", "loguru", "smtp", "mail-report", "pytz", "dateutil"]
+keywords = ["python", "utilities", "email", "logging", "loguru", "smtp", "mail-report", "pytz"]
 # https://pypi.org/classifiers/
 # https://github.com/pypa/trove-classifiers/blob/main/src/trove_classifiers/__init__.py
 classifiers = [
@@ -59,8 +59,7 @@ classifiers = [
 
 dependencies = [
     'loguru>=0.7.3',
-    'pytz>=2025.2',
-    'python-dateutil>=2.9'
+    'pytz>=2025.2'
 ]
 
 #[project.optional-dependencies]

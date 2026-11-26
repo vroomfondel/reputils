@@ -2,7 +2,7 @@
 
 They pin down the rendered message and the ``SendResult`` bookkeeping without
 any network access, so the package can be checked against different
-dependency versions (e.g. python-dateutil 2.9 vs. 4.x).
+dependency versions.
 """
 
 import smtplib

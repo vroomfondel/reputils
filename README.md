@@ -35,11 +35,10 @@ Runtime dependencies (see `pyproject.toml` / `requirements.txt`):
 
 - `loguru>=0.7.3`
 - `pytz>=2025.2` (packaged as `pytz==2025.2` in `requirements.txt`)
-- `python-dateutil==2.9.*`
 
 Development dependencies (see `requirements-dev.txt`):
 
-- `pytest`, `mypy`, `black`, `isort`, `pre-commit`, and typing stubs for dateutil and pytz
+- `pytest`, `mypy`, `black`, `isort`, `pre-commit`, and typing stubs for pytz
 
 Python version: `>=3.12`. The repo’s Makefile and CI use Python 3.14 locally/in CI.
 
