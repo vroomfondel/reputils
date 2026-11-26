@@ -2,14 +2,14 @@
 
 pyrefly
 
-pre-commit==4.5.*
+pre-commit==4.7.*
 
 # linting
-isort==7.0.*
-black==25.12.*
-mypy==1.19.*
+isort==9.0.*
+black==26.10.*
+mypy==2.4.*
 
-pytest==9.0.*
+pytest==9.2.*
 
-types-pytz>=2025.2
+types-pytz>=2026.6
 

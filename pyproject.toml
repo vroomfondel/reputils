@@ -58,8 +58,8 @@ classifiers = [
 
 
 dependencies = [
-    'loguru>=0.7.3',
-    'pytz>=2025.2'
+    'loguru>=0.8.0',
+    'pytz>=2026.6'
 ]
 
 #[project.optional-dependencies]

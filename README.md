@@ -33,8 +33,8 @@ There is also a maintenance script `scripts/update_badge.py` that is run in GitH
 
 Runtime dependencies (see `pyproject.toml` / `requirements.txt`):
 
-- `loguru>=0.7.3`
-- `pytz>=2025.2` (packaged as `pytz==2025.2` in `requirements.txt`)
+- `loguru>=0.8.0`
+- `pytz>=2026.6` (pinned as `pytz==2026.6` in `requirements.txt`)
 
 Development dependencies (see `requirements-dev.txt`):
 
@@ -227,7 +227,7 @@ Note: The Makefile activates `.venv` automatically for these targets when not ru
 make tests
 ```
 
-Pytest is configured via `pytest.ini`. Current tests are minimal (see `tests/test_base.py`).
+Pytest is configured via `pytest.ini`. `tests/test_mailreport.py` exercises `MRSendmail.send()` offline against a fake SMTP server.
 
 ## Project Structure
 
