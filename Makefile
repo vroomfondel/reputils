@@ -1,4 +1,4 @@
-.PHONY: tests help install venv lint dstart isort tcheck build build-psql commit-checks prepare pypibuild pypipush
+.PHONY: tests help install venv lint dstart isort tcheck build build-psql commit-checks prepare distcheck pypibuild pypipush
 SHELL := /usr/bin/bash
 .ONESHELL:
 
@@ -76,13 +76,21 @@ dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl dist/.
 	@touch dist/.touchfile
 
 
-pypibuild: venv dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
+# Refuses to let a build artifact leave the machine if it carries a git-crypt
+# protected path (those are PLAINTEXT in the working tree) or any file outside
+# the allowlist that pyproject.toml declares. Gates `pypibuild` and `pypipush`.
+distcheck: venv dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
+	@$(venv_activated)
+	python scripts/check_dist_secrets.py
+
+pypibuild: distcheck
 
 # REPUTILS_DIST_PACKAGES := dist/reputils-*
 
 dist/.touchfile_push: dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
 	@$(venv_activated)
 	# python3 -m twine upload --repository pypi dist/reputils-$(VERSION).tar.gz dist/reputils-$(VERSION)-py3-none-any.whl
+	$(MAKE) distcheck
 	hatch publish -r main
 	@touch dist/.touchfile_push
 
