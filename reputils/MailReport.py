@@ -412,7 +412,8 @@ class MRSendmail:
           ``multipart/mixed``; if both bodies are given they are nested in a
           ``multipart/alternative`` part. Attachments are read fully into
           memory and added as base64-encoded ``application/octet-stream``
-          parts named after ``Path.name``.
+          parts named after ``Path.name`` (quoted in ``Content-Disposition``,
+          RFC 2231-encoded when it contains non-ASCII characters).
         - Headers: ``From``, ``To``, ``Date``, and ``Subject`` are set from the
           instance fields. ``Reply-To`` and ``Return-Path`` are added when
           available, ``Cc`` when ``ccs`` is non-empty. ``Subject`` and the
@@ -599,7 +600,9 @@ class MRSendmail:
                 with open(path, "rb") as file:
                     part.set_payload(file.read())
                 encoders.encode_base64(part)
-                part.add_header("Content-Disposition", "attachment; filename={}".format(path.name))
+                # passing filename as a header parameter lets the email package quote/escape it and
+                # RFC 2231-encode non-ASCII names, instead of splicing it into the header value raw
+                part.add_header("Content-Disposition", "attachment", filename=path.name)
                 message.attach(part)
 
         # sendme ist der technische sender im "MAIL FROM: {}"-header

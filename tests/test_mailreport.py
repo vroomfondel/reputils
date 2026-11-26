@@ -7,7 +7,7 @@ dependency versions.
 
 import re
 import smtplib
-from email import message_from_string
+from email import message_from_bytes, message_from_string, policy
 from email.header import decode_header, make_header
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -155,6 +155,22 @@ def test_generated_message_id_uses_address_domain_in_multipart() -> None:
     msg = message_from_string(raw)
     assert msg.get_content_type() == "multipart/mixed"
     assert re.fullmatch(r"<[^<>@]+@example\.com>", msg["Message-ID"])
+
+
+@pytest.mark.parametrize(
+    "filename",
+    ["my report.txt", "Prüfbericht März.pdf", 'a;b"c.txt', "x\\y.txt"],
+)
+def test_attachment_filename_survives_round_trip(tmp_path: Path, filename: str) -> None:
+    att = tmp_path / filename
+    att.write_bytes(b"payload")
+
+    raw, _ = _mailer().send(txt="plain", files=[att])
+
+    for msg in (message_from_string(raw), message_from_bytes(raw.encode(), policy=policy.default)):
+        attachment = list(msg.walk())[-1]
+        assert attachment.get_content_disposition() == "attachment"
+        assert attachment.get_filename() == filename
 
 
 def test_send_requires_body() -> None:
